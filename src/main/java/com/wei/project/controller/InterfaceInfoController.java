@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.wei.project.service.UserInterfaceInfoService;
 import com.wei.weiapiclientsdk.client.WeiApiClient;
 import com.wei.project.annotation.AuthCheck;
 import com.wei.project.common.*;
@@ -43,6 +44,8 @@ public class InterfaceInfoController {
 
     @Resource
     private UserService userService;
+    @Resource
+    private UserInterfaceInfoService userInterfaceInfoService;
     @Resource
     private WeiApiClient weiApiClient;
 
@@ -141,7 +144,10 @@ public class InterfaceInfoController {
         if (interfaceInfo == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        return ResultUtils.success(interfaceInfoService.getInterfaceInfoVO(interfaceInfo, request));
+        int leftNum = userInterfaceInfoService.getLeftNum(interfaceInfo.getId(), userService.getLoginUser(request).getId());
+        InterfaceInfoVO interfaceInfoVO = interfaceInfoService.getInterfaceInfoVO(interfaceInfo, request);
+        interfaceInfoVO.setLeftNum(leftNum);
+        return ResultUtils.success(interfaceInfoVO);
     }
 
     /**

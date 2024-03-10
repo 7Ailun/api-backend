@@ -18,6 +18,7 @@ import com.wei.project.model.enums.UserRoleEnum;
 import com.wei.project.model.vo.LoginUserVO;
 import com.wei.project.model.vo.UserVO;
 import com.wei.project.service.UserService;
+import com.wei.project.utils.KeyGenerator;
 import com.wei.project.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -277,6 +278,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public boolean genAkSk(HttpServletRequest request) {
+        User loginUser = getLoginUser(request);
+        Long id = loginUser.getId();
+        String accessKey = KeyGenerator.generateAccessKey();
+        String secretKey = KeyGenerator.generateSecretKey();
+        // 查询 更新 ak sk
+        User user = new User();
+        user.setId(id);
+        user.setAccessKey(accessKey);
+        user.setSecretKey(secretKey);
+        boolean result = this.updateById(user);
+        if(!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "更新失败");
+        }
+        return true;
     }
 
 }

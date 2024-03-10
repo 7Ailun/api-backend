@@ -31,6 +31,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.wei.project.utils.KeyGenerator;
 import com.wei.weiapicommon.model.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
@@ -361,5 +362,11 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+    @PostMapping("/gen/key")
+    public BaseResponse<Boolean> genAkSk(HttpServletRequest request) {
+        boolean result = userService.genAkSk(request);
+        return ResultUtils.success(result);
+
     }
 }

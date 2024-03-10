@@ -6,6 +6,7 @@ import com.wei.project.common.*;
 import com.wei.project.constant.UserConstant;
 import com.wei.project.exception.BusinessException;
 import com.wei.project.exception.ThrowUtils;
+import com.wei.project.model.dto.userinterfaceinfo.UserInterfaceInfoAddInvokeCountRequest;
 import com.wei.project.model.dto.userinterfaceinfo.UserInterfaceInfoAddRequest;
 import com.wei.project.model.dto.userinterfaceinfo.UserInterfaceInfoQueryRequest;
 import com.wei.project.model.dto.userinterfaceinfo.UserInterfaceInfoUpdateRequest;
@@ -13,6 +14,7 @@ import com.wei.project.model.dto.userinterfaceinfo.UserInterfaceInfoUpdateReques
 import com.wei.project.model.vo.UserInterfaceInfoVO;
 import com.wei.project.service.UserInterfaceInfoService;
 import com.wei.project.service.UserService;
+import com.wei.weiapicommon.model.entity.InterfaceInfo;
 import com.wei.weiapicommon.model.entity.User;
 import com.wei.weiapicommon.model.entity.UserInterfaceInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -183,6 +185,17 @@ public class UserInterfaceInfoController {
         Page<UserInterfaceInfo> userInterfaceInfoPage = userInterfaceInfoService.page(new Page<>(current, size),
                 userInterfaceInfoService.getQueryWrapper(userInterfaceInfoQueryRequest));
         return ResultUtils.success(userInterfaceInfoService.getUserInterfaceInfoVOPage(userInterfaceInfoPage, request));
+    }
+    /**
+     * 获取调用次数
+     */
+    @PostMapping("/add/invoke/count")
+    public BaseResponse<Integer> addInvokeCount(@RequestBody UserInterfaceInfoAddInvokeCountRequest addInvokeCountRequest,HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        long interfaceInfoId = addInvokeCountRequest.getInterfaceInfoId();
+        int number = addInvokeCountRequest.getNumber();
+        int count = userInterfaceInfoService.addInvokeCount(interfaceInfoId, loginUser.getId(), number);
+        return ResultUtils.success(count);
     }
 
 }

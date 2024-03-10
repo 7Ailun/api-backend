@@ -120,4 +120,5 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    boolean genAkSk(HttpServletRequest request);
 }

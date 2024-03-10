@@ -61,6 +61,11 @@ public class InterfaceInfoVO {
     private Long userId;
 
     /**
+     * 剩余次数
+     */
+    private Integer leftNum;
+
+    /**
      * 创建时间
      */
     private Date createTime;
