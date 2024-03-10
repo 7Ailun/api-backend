@@ -9,7 +9,7 @@ server:
     session:
       cookie:
         max-age: 2592000
-        domain: https://81.70.90.77/
+        domain:
 spring:
   # 数据库配置
   datasource:
@@ -30,4 +30,4 @@ knife4j:
     password: 123456
 dubbo:
   registry:
-    address: nacos://10.0.8.5/:8848
+    address:
