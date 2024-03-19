@@ -7,8 +7,8 @@ import java.io.Serializable;
 /**
  * 创建请求
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author <a href="https://github.com/7Ailun">艾伦</a>
+ * 
  */
 @Data
 public class InterfaceInfoAddRequest implements Serializable {
@@ -22,9 +22,13 @@ public class InterfaceInfoAddRequest implements Serializable {
      * 描述
      */
     private String description;
-
     /**
      * 接口地址
+     */
+    private String host;
+
+    /**
+     * 接口路径
      */
     private String url;
 

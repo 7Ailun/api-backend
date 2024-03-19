@@ -28,9 +28,23 @@ public class InnerUserInterfaceInfoServiceImpl implements InnerUserInterfaceInfo
         queryWrapper.eq("interfaceInfoId",interfaceInfoId).eq("userId",userId);
         UserInterfaceInfo userInterfaceInfo = userInterfaceInfoService.getOne(queryWrapper);
         if(userInterfaceInfo == null) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+         throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户接口信息表不存在");
         }
         return userInterfaceInfo.getLeftNum();
+    }
+
+    @Override
+    public UserInterfaceInfo addDefaultUserInterfaceInfo(Long interfaceId, Long userId) {
+        UserInterfaceInfo userInterfaceInfo = new UserInterfaceInfo();
+        userInterfaceInfo.setUserId(userId);
+        userInterfaceInfo.setInterfaceInfoId(interfaceId);
+        userInterfaceInfo.setLeftNum(20);
+        boolean save = userInterfaceInfoService.save(userInterfaceInfo);
+        if(save) {
+            return userInterfaceInfo;
+        } {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口绑定用户失败");
+        }
     }
 
 

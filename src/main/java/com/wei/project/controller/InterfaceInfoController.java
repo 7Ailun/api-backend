@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.wei.project.manager.RedissonLimitManager;
 import com.wei.project.service.UserInterfaceInfoService;
 import com.wei.weiapiclientsdk.client.WeiApiClient;
 import com.wei.project.annotation.AuthCheck;
@@ -31,8 +32,8 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 接口管理
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author <a href="https://github.com/7Ailun">艾伦</a>
+ * 
  */
 @RestController
 @RequestMapping("/interfaceInfo")
@@ -48,6 +49,10 @@ public class InterfaceInfoController {
     private UserInterfaceInfoService userInterfaceInfoService;
     @Resource
     private WeiApiClient weiApiClient;
+    @Resource
+    private RedissonLimitManager redissonLimitManager;
+    private  static final String SAT = "allen";
+
 
 
 
@@ -68,9 +73,9 @@ public class InterfaceInfoController {
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         BeanUtils.copyProperties(interfaceInfoAddRequest, interfaceInfo);
 
-        interfaceInfoService.validInterfaceInfo(interfaceInfo, true);
         User loginUser = userService.getLoginUser(request);
         interfaceInfo.setUserId(loginUser.getId());
+        interfaceInfoService.validInterfaceInfo(interfaceInfo, true);
 
         boolean result = interfaceInfoService.save(interfaceInfo);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -249,30 +254,49 @@ public class InterfaceInfoController {
     /**
      * 上线接口（仅管理员）
      *
-     * @param idrequest
+     * @param
      * @return
      */
     @PostMapping("/online")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idrequest) {
+    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest,HttpServletRequest request) {
 
-        if(idrequest == null || idrequest.getId() <= 0 ) {
+        if(interfaceInfoInvokeRequest == null || interfaceInfoInvokeRequest.getId() <= 0 ) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Long id = idrequest.getId();
+        Long id = interfaceInfoInvokeRequest.getId();
         // 判断是否存在
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
         if(oldInterfaceInfo == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+        String method = oldInterfaceInfo.getMethod();
+        String url = oldInterfaceInfo.getUrl();
+        String requestParams = interfaceInfoInvokeRequest.getRequestParams();
+        if(requestParams == null) {
+            requestParams = "";
+        }
 
         // 判断改接口是否可以调用
-        com.wei.weiapiclientsdk.model.entry.User user = new com.wei.weiapiclientsdk.model.entry.User();
+/*        com.wei.weiapiclientsdk.model.entry.User user = new com.wei.weiapiclientsdk.model.entry.User();
         user.setName("allen");
         String userNameByPost = weiApiClient.getUserNameByPost(user);
         if(StrUtil.isBlank(userNameByPost)) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }*/
+        WeiApiClient weiApiClient = interfaceInfoService.getWeiAPIClient(request);
+
+        try {
+            String invokeResult = weiApiClient.invokeInterface(url,requestParams,method);
+            System.out.println("invokeResult = " + invokeResult);
+            if(StrUtil.isBlank(invokeResult)) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口数据为空");
+            }
+        } catch (Exception e) {
+            log.error("error",e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口验证失败");
         }
+
         // 仅本人或管理员可修改
         InterfaceInfo interfaceInfo = new InterfaceInfo();
         interfaceInfo.setId(id);
@@ -315,7 +339,6 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         Long id = interfaceInfoInvokeRequest.getId();
-        String requestParams = interfaceInfoInvokeRequest.getRequestParams();
 
         // 判断是否存在
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
@@ -326,19 +349,27 @@ public class InterfaceInfoController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "接口已关闭");
         }
         // 调用
-        User loginUser = userService.getLoginUser(request);
-        String accessKey = loginUser.getAccessKey();
-        String secretKey = loginUser.getSecretKey();
-        WeiApiClient tempClient = new WeiApiClient(accessKey, secretKey);
-        Gson gson = new Gson();
-        com.wei.weiapiclientsdk.model.entry.User user = null;
+       User loginUser = userService.getLoginUser(request);
+        String method = oldInterfaceInfo.getMethod();
+        String url = oldInterfaceInfo.getUrl();
+        String requestParams = interfaceInfoInvokeRequest.getRequestParams();
+        if(requestParams == null) {
+            requestParams = "";
+        }
+        // 限流处理 每秒最多一次
+        String key = SAT + loginUser.getId();
+        redissonLimitManager.doRateLimit(key);
+        WeiApiClient weiApiClient = interfaceInfoService.getWeiAPIClient(request);
+        String invokeResult = null;
         try {
-            user = gson.fromJson(requestParams, com.wei.weiapiclientsdk.model.entry.User.class);
-        } catch (JsonSyntaxException e) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"格式错误");
+            invokeResult = weiApiClient.invokeInterface(url,requestParams,method);
+            if(StrUtil.isBlank(invokeResult)) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口数据为空");
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"接口验证失败");
         }
 
-        String userNameByPost = tempClient.getUserNameByPost(user);
-        return ResultUtils.success(userNameByPost);
+        return ResultUtils.success(invokeResult);
     }
 }

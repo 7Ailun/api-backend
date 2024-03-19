@@ -3,8 +3,8 @@ package com.wei.project.common;
 /**
  * 自定义错误码
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author <a href="https://github.com/7Ailun">艾伦</a>
+ * 
  */
 public enum ErrorCode {
 
@@ -14,8 +14,10 @@ public enum ErrorCode {
     NO_AUTH_ERROR(40101, "无权限"),
     NOT_FOUND_ERROR(40400, "请求数据不存在"),
     FORBIDDEN_ERROR(40300, "禁止访问"),
+    TOO_MANY_REQUEST(42900, "请求次数太多"),
     SYSTEM_ERROR(50000, "系统内部异常"),
     OPERATION_ERROR(50001, "操作失败");
+
 
     /**
      * 状态码

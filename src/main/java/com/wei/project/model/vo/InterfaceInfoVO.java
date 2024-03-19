@@ -24,6 +24,10 @@ public class InterfaceInfoVO {
      * 描述
      */
     private String description;
+    /**
+     * 接口地址
+     */
+    private String host;
 
     /**
      * 接口地址

@@ -36,17 +36,21 @@ import org.springframework.util.DigestUtils;
 /**
  * 用户服务实现
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author <a href="https://github.com/7Ailun">艾伦</a>
+ * 
  */
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+    /**
+     * 用与拼接用户名称
+     */
+    public int num = 1;
 
     /**
      * 盐值，混淆密码
      */
-    public static final String SALT = "yupi";
+    public static final String SALT = "allen";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -82,12 +86,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setUserPassword(encryptPassword);
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretkey);
+            user = userDefaultInfo(user);
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
             return user.getId();
         }
+    }
+
+
+    private User userDefaultInfo(User user) {
+        user.setUserProfile("这个家伙很懒，什么都没留下~");
+        user.setUserAvatar("https://pic.imgdb.cn/item/65ebf8bb9f345e8d039a8149.jpg");
+        user.setUserName("用户" + num);
+        num ++;
+        return user;
     }
 
     @Override
@@ -284,8 +301,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean genAkSk(HttpServletRequest request) {
         User loginUser = getLoginUser(request);
         Long id = loginUser.getId();
-        String accessKey = KeyGenerator.generateAccessKey();
-        String secretKey = KeyGenerator.generateSecretKey();
+        String userAccount = loginUser.getUserAccount();
+        String accessKey = DigestUtil.md5Hex(SALT + userAccount + RandomUtil.randomNumbers(5));
+        String secretKey = DigestUtil.md5Hex(SALT + userAccount + RandomUtil.randomNumbers(8));
         // 查询 更新 ak sk
         User user = new User();
         user.setId(id);
